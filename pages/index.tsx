@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Head from "next/head";
 import TextareaAutosize from "react-textarea-autosize";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChatGPTMessage } from "../interfaces/interfaces";
 import { aiSuggestions } from "../statics/statics";
 import Navbar from "../components/Navbar";
@@ -11,6 +11,10 @@ export default function Home() {
   const [userInput, setUserInput] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [chatHistory, setChatHistory] = useState<ChatGPTMessage[]>([]);
+  const [firstContact, setFirstContact] = useState<boolean>(false);
+  // TODO : find a way to set autoscroll to stop temporarily when user is not at the bottom of the chatbox
+  const [autoScroll, setAutoScroll] = useState<boolean>(true);
+  let dummyScroll = useRef<null | HTMLDivElement>(null);
 
   const getUserInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setUserInput(e.target.value);
@@ -20,8 +24,9 @@ export default function Home() {
     setUserInput((prev) => prev + " " + v);
   };
 
-  const submitInput = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  const submitInput = async () => {
     setIsLoading(true);
+    setFirstContact(true);
     setUserInput("");
     const payload: ChatGPTMessage[] =
       chatHistory.length > 1
@@ -30,7 +35,7 @@ export default function Home() {
             {
               role: "system",
               content:
-                "You are a helpful assistant. Additionally you will make small talk",
+                "You are a casual helpful assistant expert in cryptocurrency and WEB 3 space, you can speak or response in English or in Indonesian, Additionally you will make small talk",
             },
             { role: "user", content: userInput },
           ];
@@ -47,12 +52,12 @@ export default function Home() {
           conversation: payload,
         }),
       });
+      setFirstContact(false);
 
       if (!response.ok) {
         throw new Error(response.statusText);
       }
 
-      // This data is a ReadableStream
       const data = response.body;
       if (!data) {
         return;
@@ -82,6 +87,29 @@ export default function Home() {
     setIsLoading(false);
   };
 
+  const onTextAreaSubmit = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && e.shiftKey) {
+      return;
+    }
+
+    if (e.key === "Enter") {
+      submitInput();
+      return;
+    }
+  };
+
+  useEffect(() => {
+    if (autoScroll) {
+      if (dummyScroll.current) {
+        dummyScroll.current.scrollIntoView({
+          behavior: "smooth",
+          block: "end",
+          inline: "nearest",
+        });
+      }
+    }
+  }, [chatHistory, autoScroll]);
+
   return (
     <main className="flex min-h-screen w-full flex-col justify-between">
       <Head>
@@ -90,6 +118,7 @@ export default function Home() {
         <link rel="icon" href="/gpt-avatar.ico" />
       </Head>
       <Navbar />
+
       <div className="m-5 flex items-center justify-center">
         <div className="flex h-[670px] w-[900px] flex-col items-center justify-between rounded-xl border-2 border-[#D1D5DB] p-5">
           {/* Suggestions & Chat Box Header */}
@@ -109,7 +138,7 @@ export default function Home() {
           </div>
 
           {/* Chat Box Result */}
-          <div className="margin-auto my-2 flex h-full w-full flex-col items-start gap-6 overflow-y-scroll p-4">
+          <div className="margin-auto my-2 flex h-full w-full flex-col items-start gap-6 overflow-y-auto p-4">
             {chatHistory.map((e, i: number) => {
               if (e.role === "user")
                 return (
@@ -143,6 +172,25 @@ export default function Home() {
                   </div>
                 );
             })}
+            {firstContact && (
+              <div className="relative flex w-full items-center justify-start gap-4 bg-[#f7f7f8] p-6 shadow-[0_0_10px_rgba(0,0,0,0.10)]">
+                <Image
+                  src="/gpt-avatar.svg"
+                  alt="logo"
+                  width="0"
+                  height="0"
+                  sizes="100vw"
+                  priority={true}
+                  className="h-auto w-[27px] "
+                />
+                <div className="flex items-center justify-center space-x-1 ">
+                  <div className="w-1 h-1 rounded-full animate-pulse bg-slate-400"></div>
+                  <div className="w-1 h-1 rounded-full animate-pulse bg-slate-400"></div>
+                  <div className="w-1 h-1 rounded-full animate-pulse bg-slate-400"></div>
+                </div>
+              </div>
+            )}
+            <div ref={dummyScroll}></div>
           </div>
 
           {/* Chat Box Input */}
@@ -155,26 +203,36 @@ export default function Home() {
               value={userInput}
               onChange={getUserInput}
               style={{ resize: "none" }}
-            />
-            <button
+              onKeyDown={onTextAreaSubmit}
               disabled={isLoading}
-              onClick={submitInput}
-              type="submit"
-              className="absolute right-3 rounded-md p-1 text-gray-500 hover:bg-slate-300"
-            >
-              <svg
-                stroke="currentColor"
-                fill="currentColor"
-                strokeWidth="0"
-                viewBox="0 0 20 20"
-                className="h-4 w-4 rotate-90"
-                height="1em"
-                width="1em"
-                xmlns="http://www.w3.org/2000/svg"
+            />
+            {isLoading ? (
+              <div className="flex items-center justify-center space-x-1 absolute right-3 rounded-md p-1">
+                <div className="w-1 h-1 rounded-full animate-pulse bg-slate-400"></div>
+                <div className="w-1 h-1 rounded-full animate-pulse bg-slate-400"></div>
+                <div className="w-1 h-1 rounded-full animate-pulse bg-slate-400"></div>
+              </div>
+            ) : (
+              <button
+                disabled={isLoading}
+                onClick={submitInput}
+                type="submit"
+                className="absolute right-3 rounded-md p-1 text-gray-500 hover:bg-slate-300"
               >
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
-              </svg>
-            </button>
+                <svg
+                  stroke="currentColor"
+                  fill="currentColor"
+                  strokeWidth="0"
+                  viewBox="0 0 20 20"
+                  className="h-4 w-4 rotate-90"
+                  height="1em"
+                  width="1em"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z"></path>
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </div>

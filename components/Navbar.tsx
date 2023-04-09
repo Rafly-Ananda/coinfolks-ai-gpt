@@ -24,7 +24,7 @@ export default function Navbar() {
           </button>
         </div>
       </div>
-      <ul className="flex w-1/2 flex-row items-center justify-center border-b border-slate-200 pt-5">
+      <ul className="flex  md:w-11/12 lg:w-[950px] flex-row items-center justify-center border-b border-slate-200 pt-5">
         {menus.map((e: any, i: number) => (
           <a
             key={i}
