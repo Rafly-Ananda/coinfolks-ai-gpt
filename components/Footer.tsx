@@ -3,8 +3,8 @@ import Image from "next/image";
 
 export default function Footer() {
   return (
-    <footer className="flex items-center justify-center  border-t border-black">
-      <div className="relative flex w-4/5 flex-row items-center justify-center p-6">
+    <footer className="hidden md:flex items-center justify-center border-t border-black">
+      <div className="relative flex w-full lg:w-4/5 flex-row items-center justify-end lg:justify-center p-6">
         <Image
           src="/logo_white.png"
           alt="logo"
@@ -15,9 +15,9 @@ export default function Footer() {
           className="h-auto w-[124px]"
         />
 
-        <div className="absolute flex w-full items-center justify-between ">
+        <div className="absolute flex w-full items-center justify-between pl-10 lg:pl-0">
           <p className="text-sm font-semibold">
-            Copyright &#169;. 2022 All Rights Reserved.
+            © 2023 CoinFolks - PT Rekan Artha Teknologi.
           </p>
           <div></div>
         </div>
