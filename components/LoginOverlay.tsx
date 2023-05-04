@@ -42,7 +42,6 @@ export default function LoginOverlay() {
               width="0"
               height="0"
               sizes="100vw"
-              priority={true}
               className="h-auto w-[20px]"
             />
             <span>Log in with Google</span>
